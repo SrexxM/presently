@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner and Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Presently</h1>
+            <p>Generate, scan, and manage QR codes for easy attendance </p>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="generator">
+                <span class="icon">🂾</span>
+                QR Generator
+            </button>
+            <button class="tab-btn" data-tab="scanner">
+                <span class="icon">⛶</span>
+                QR Scanner
+            </button>
+            <button class="tab-btn" data-tab="attendance">
+                <span class="icon">👥</span>
+                Attendance
+            </button>
+        </nav>
+
+        <!-- Generator  -->
+        <div id="generator" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h2>Generate QR Code</h2>
+                    
+                    <div class="form-group">
+                        <label for="id">Student ID</label>
+                        <input type="text" id="student-id" placeholder="Enter student ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-name">Student Name</label>
+                        <input type="text" id="student-name" placeholder="Enter student name">
+                    </div>
+                    
+                    <div class="quick-generate">
+                        <h3>Quick Generate Student QR:</h3>
+                        <div class="student-buttons">
+                            <button class="student-btn" data-student='{"id":"2021001","name":"Kenneth Matthew"}'>+ Kenneth Matthew</button>
+                            <button class="student-btn" data-student='{"id":"2021002","name":"Stephen Runandi"}'>+ Stephen Runandi</button>
+                            <button class="student-btn" data-student='{"id":"2021003","name":"Dias Satria"}'>+ Dias Satria</button>
+                            <button class="student-btn" data-student='{"id":"2021004","name":"Rama Putra"}'>+ Rama Putra</button>
+                          
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div id="qr-display" class="qr-display">
+                        <p class="placeholder">QR Code Here </p>
+                    </div>
+                    
+                    <div class="button-group" id="qr-actions" style="display: none;">
+                        <button id="copy-btn" class="btn btn-primary">📋 Copy Text</button>
+                        <button id="download-btn" class="btn btn-success">💾 Download</button>
+                    </div>
+                    
+                    <div id="qr-data" class="qr-data" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanner Page -->
+        <div id="scanner" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>QR Code Scanner</h3>
+                    <p class="scanner-info">Check Your QR Code Here</p>
+                    
+                    <div id="qr-reader" class="qr-reader"></div>
+                    
+                    <div class="button-group">
+                        <button id="start-scan" class="btn btn-primary">📷 Start Scanning</button>
+                        <button id="stop-scan" class="btn btn-danger" style="display: none;">⏹️ Stop Scanning</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Scan Results</h2>
+                    
+                    <div id="scan-results" class="scan-results">
+                        <div class="placeholder-result">
+                            <span class="icon">📷</span>
+                            <p>Scan results will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Page -->
+        <div id="attendance" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>QR Code Scanner</h3>
+                    <p class="scanner-info">Scan student QR codes for attendance</p>
+                    
+                    <div id="attendance-reader" class="qr-reader"></div>
+                    
+                    <div class="button-group">
+                        <button id="start-attendance-scan" class="btn btn-primary">📷 Start Scanning</button>
+                        <button id="stop-attendance-scan" class="btn btn-danger" style="display: none;">⏹️ Stop Scanning</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="attendance-header">
+                        <h2>Attendance System</h2>
+                        <div class="session-info">
+                            📅 <span id="current-session"></span>
+                        </div>
+                    </div>
+
+                    <div id="attendance-message" class="message" style="display: none;"></div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card stat-total">
+                            <div class="stat-header">
+                                <span class="icon">👥</span>
+                                <span>Total Present</span>
+                            </div>
+                            <p class="stat-number" id="total-present">0</p>
+                        </div>
+
+                        <div class="stat-card stat-ontime">
+                            <div class="stat-header">
+                                <span class="icon">✅</span>
+                                <span>Present</span>
+                            </div>
+                            <p class="stat-number" id="on-time">0</p>
+                        </div>
+
+                        <div class="stat-card stat-late">
+                            <div class="stat-header">
+                                <span class="icon">📊</span>
+                                <span>Total Scans</span>
+                            </div>
+                            <p class="stat-number" id="late-count">0</p>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button id="export-csv" class="btn btn-success" disabled>📊 Export CSV</button>
+                        <button id="clear-attendance" class="btn btn-danger" disabled>🗑️ Clear All</button>
+                    </div>
+
+                    <div class="attendance-table-container">
+                        <table id="attendance-table" class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-tbody">
+                                <tr class="no-records">
+                                    <td colspan="4">No attendance records yet. Scan a QR code to mark attendance.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
