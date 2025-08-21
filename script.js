@@ -197,6 +197,42 @@ function initializeAttendanceSystem() {
     exportBtn.addEventListener('click', exportAttendanceCSV);
     clearBtn.addEventListener('click', clearAttendance);
 
+    // ✅ Callback sukses
+    function onSuccess(decodedText) {
+        totalScans++;
+        try {
+            let attendeeInfo = JSON.parse(decodedText);
+            const existingRecord = attendanceRecords.find(r => r.id === attendeeInfo.id);
+
+            if (existingRecord) {
+                showMessage('error', `${attendeeInfo.name || attendeeInfo.id} already marked present`);
+                return;
+            }
+
+            const now = new Date();
+            const newRecord = {
+                id: attendeeInfo.id,
+                name: attendeeInfo.name || attendeeInfo.id,
+                timestamp: now,
+                status: 'present'
+            };
+
+            attendanceRecords.push(newRecord);
+            updateAttendanceDisplay();
+            showMessage('success', `${newRecord.name} marked present`);
+        } catch (error) {
+            showMessage('error', 'Invalid QR code format');
+        }
+
+        // ✅ langsung stop scanning setelah 1x berhasil
+        stopAttendanceScanning();
+    }
+
+    // ✅ Callback error
+    function onError(error) {
+        console.debug('Attendance scan error:', error);
+    }
+
     function startAttendanceScanning() {
         const config = {
             fps: 10,
@@ -205,15 +241,7 @@ function initializeAttendanceSystem() {
         };
 
         attendanceScanner = new Html5QrcodeScanner('attendance-reader', config, false);
-        attendanceScanner.render(
-            (decodedText) => {
-                processAttendance(decodedText);
-                stopAttendanceScanning();
-            },
-            (error) => {
-                console.debug('Attendance scan error:', error);
-            }
-        );
+        attendanceScanner.render(onSuccess, onError);
 
         startBtn.style.display = 'none';
         stopBtn.style.display = 'block';
@@ -228,33 +256,6 @@ function initializeAttendanceSystem() {
         stopBtn.style.display = 'none';
     }
 
-        function processAttendance(data) {
-        totalScans++; 
-        try {
-        let attendeeInfo = JSON.parse(data);
-            const existingRecord = attendanceRecords.find(r => r.id === attendeeInfo.id);
-
-            if (existingRecord) {
-                showMessage('error', `${attendeeInfo.name || attendeeInfo.id} already marked present`);
-                return;
-            }
-
-            const now = new Date();
-            const newRecord = {
-                id: attendeeInfo.id,
-                name: attendeeInfo.name || attendeeInfo.id,
-                timestamp: now,
-                status: 'present' // No more "late"
-            };
-
-            attendanceRecords.push(newRecord);
-            updateAttendanceDisplay();
-            showMessage('success', `${newRecord.name} marked present`);
-        } catch (error) {
-            showMessage('error', 'Invalid QR code format');
-        }
-    }
-
     function updateAttendanceDisplay() {
         const tbody = document.getElementById('attendance-tbody');
         const totalPresent = document.getElementById('total-present');
@@ -263,7 +264,7 @@ function initializeAttendanceSystem() {
 
         totalPresent.textContent = attendanceRecords.length;
         onTime.textContent = attendanceRecords.length;
-        lateCount.textContent = totalScans; 
+        lateCount.textContent = totalScans;
         document.getElementById('export-csv').disabled = attendanceRecords.length === 0;
         document.getElementById('clear-attendance').disabled = attendanceRecords.length === 0;
 
@@ -310,6 +311,7 @@ function initializeAttendanceSystem() {
         showMessage('success', 'Attendance cleared');
     }
 }
+
 
 function showMessage(type, text) {
     const messageDiv = document.getElementById('attendance-message');
