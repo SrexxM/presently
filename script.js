@@ -217,7 +217,10 @@ function initializeAttendanceSystem() {
             processAttendance(decodedText);
 
             setTimeout(() => {
-                isScanning = false; 
+                isScanning = false;
+                if (attendanceScanner) {
+            attendanceScanner.resumeScanning(); 
+        }
             }, 2000); 
         },
         (error) => {
