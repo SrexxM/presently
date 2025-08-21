@@ -197,11 +197,58 @@ function initializeAttendanceSystem() {
     exportBtn.addEventListener('click', exportAttendanceCSV);
     clearBtn.addEventListener('click', clearAttendance);
 
-    // ✅ Callback sukses
-    function onSuccess(decodedText) {
-        totalScans++;
+    function startAttendanceScanning() {
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+    // flag delay
+    let isScanning = false; 
+
+    attendanceScanner = new Html5QrcodeScanner('attendance-reader', config, false);
+    attendanceScanner.render(
+        (decodedText) => {
+            if (isScanning) return; 
+            isScanning = true;
+
+            totalScans++;
+            updateScanCount();
+            processAttendance(decodedText);
+
+            setTimeout(() => {
+                isScanning = false; 
+            }, 2000); 
+        },
+        (error) => {
+            console.debug('Attendance scan error:', error);
+        }
+    );
+
+    function updateScanCount() {
+        const scanCount = document.getElementById('late-count');
+        if (scanCount) {
+            scanCount.textContent = totalScans;
+        }
+    }
+
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'block';
+}
+
+
+    function stopAttendanceScanning() {
+        if (attendanceScanner) {
+            attendanceScanner.clear();
+            attendanceScanner = null;
+        }
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+    }
+
+        function processAttendance(data) {
         try {
-            let attendeeInfo = JSON.parse(decodedText);
+        let attendeeInfo = JSON.parse(data);
             const existingRecord = attendanceRecords.find(r => r.id === attendeeInfo.id);
 
             if (existingRecord) {
@@ -223,37 +270,6 @@ function initializeAttendanceSystem() {
         } catch (error) {
             showMessage('error', 'Invalid QR code format');
         }
-
-        // ✅ langsung stop scanning setelah 1x berhasil
-        stopAttendanceScanning();
-    }
-
-    // ✅ Callback error
-    function onError(error) {
-        console.debug('Attendance scan error:', error);
-    }
-
-    function startAttendanceScanning() {
-        const config = {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
-        };
-
-        attendanceScanner = new Html5QrcodeScanner('attendance-reader', config, false);
-        attendanceScanner.render(onSuccess, onError);
-
-        startBtn.style.display = 'none';
-        stopBtn.style.display = 'block';
-    }
-
-    function stopAttendanceScanning() {
-        if (attendanceScanner) {
-            attendanceScanner.clear();
-            attendanceScanner = null;
-        }
-        startBtn.style.display = 'block';
-        stopBtn.style.display = 'none';
     }
 
     function updateAttendanceDisplay() {
@@ -264,7 +280,7 @@ function initializeAttendanceSystem() {
 
         totalPresent.textContent = attendanceRecords.length;
         onTime.textContent = attendanceRecords.length;
-        lateCount.textContent = totalScans;
+        lateCount.textContent = totalScans; 
         document.getElementById('export-csv').disabled = attendanceRecords.length === 0;
         document.getElementById('clear-attendance').disabled = attendanceRecords.length === 0;
 
@@ -311,7 +327,6 @@ function initializeAttendanceSystem() {
         showMessage('success', 'Attendance cleared');
     }
 }
-
 
 function showMessage(type, text) {
     const messageDiv = document.getElementById('attendance-message');
