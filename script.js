@@ -205,7 +205,6 @@ function initializeAttendanceSystem() {
         };
 
         attendanceScanner = new Html5QrcodeScanner('attendance-reader', config, false);
-        attendanceScanner.render(onSuccess, onError);
         attendanceScanner.render(
             (decodedText) => {
                 processAttendance(decodedText);
